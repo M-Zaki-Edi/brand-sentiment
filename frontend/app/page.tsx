@@ -1,0 +1,53 @@
+// app/page.tsx
+"use client";
+import { useState } from "react";
+import { dummyBrands, type Sentiment } from "@/data/dummy";
+import { hitungSkor } from "@/lib/score";
+import BrandInput from "@/components/BrandInput";
+import SummaryCard from "@/components/SummaryCard";
+import AIRecommendation from "@/components/AIRecommendation";
+import SentimentChart from "@/components/SentimentChart";
+import TopicList from "@/components/TopicList";
+import { EmptyState, LoadingState, ErrorState } from "@/components/States";
+
+type Status = "kosong" | "loading" | "hasil" | "error";
+
+export default function Dashboard() {
+  const [status, setStatus] = useState<Status>("kosong");
+  const [brand, setBrand] = useState("");
+  const [data, setData] = useState<Sentiment | null>(null); // BARU
+
+  const handlePantau = (nama: string) => {
+    const key = nama.trim().toLowerCase();
+    if (!key) return; // input kosong tidak diproses
+    setBrand(nama.trim());
+    setStatus("loading");
+    // Nanti Kidi ganti isi setTimeout dengan fetch ke API
+    setTimeout(() => {
+      const found = dummyBrands[key];
+      if (found) { setData(found); setStatus("hasil"); }
+      else setStatus("error");
+    }, 1500);
+  };
+
+  const skor = data ? hitungSkor(data.positive, data.negative) : 0;
+
+  return (
+    <div className="space-y-6">
+      <BrandInput onPantau={handlePantau} compact={status === "hasil"} />
+      {status === "kosong" && <EmptyState />}
+      {status === "loading" && <LoadingState brand={brand} />}
+      {status === "error" && <ErrorState onRetry={() => setStatus("kosong")} />}
+      {status === "hasil" && data && (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <SummaryCard data={data} skor={skor} />
+            <AIRecommendation summary={data.aiSummary} recommendations={data.recommendations} />
+          </div>
+          <SentimentChart data={data.trend} />
+          <TopicList topics={data.topics} />
+        </>
+      )}
+    </div>
+  );
+}
