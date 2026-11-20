@@ -1,0 +1,12 @@
+# dependencies
+node_modules/
+# environment — JANGAN pernah commit
+.env
+.env.local
+.env.*.local
+# build
+.next/
+dist/
+# OS & editor
+.DS_Store
+*.log
