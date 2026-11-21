@@ -2,7 +2,7 @@
 "use client";
 import { useState } from "react";
 import { hitungSkor } from "@/lib/score";
-import type { Sentiment } from "@/data/dummy";
+import { dummyBrands, type Sentiment } from "@/data/dummy";
 import BrandInput from "@/components/BrandInput";
 import SummaryCard from "@/components/SummaryCard";
 import AIRecommendation from "@/components/AIRecommendation";
@@ -26,11 +26,33 @@ export default function Dashboard() {
     setBrand(key);
     setStatus("loading");
 
+    const keyLower = key.toLowerCase();
+
+    // JIKA API_URL KOSONG (backend belum siap), LANGSUNG PAKAI DUMMY
+    if (!API_URL) {
+      setTimeout(() => {
+        if (dummyBrands[keyLower]) {
+          setData(dummyBrands[keyLower]);
+          setStatus("hasil");
+        } else {
+          setStatus("error"); // Brand asing belum didukung di mode dummy
+        }
+      }, 800);
+      return;
+    }
+
+    // JIKA API_URL ADA, COBA FETCH KE BACKEND
     try {
       const res = await fetch(`${API_URL}/api/sentiment?brand=${encodeURIComponent(key)}`);
       
+      // JIKA BACKEND ERROR / GAGAL, FALLBACK KE DUMMY (biar web gak kosong)
       if (!res.ok) {
-        setStatus("error");
+        if (dummyBrands[keyLower]) {
+          setData(dummyBrands[keyLower]);
+          setStatus("hasil");
+        } else {
+          setStatus("error");
+        }
         return;
       }
 
@@ -38,8 +60,14 @@ export default function Dashboard() {
       setData(json);
       setStatus("hasil");
     } catch (err) {
-      console.error(err);
-      setStatus("error");
+      console.error("Fetch gagal, fallback ke dummy:", err);
+      // FALLBACK JIKA KONEKSI PUTUS
+      if (dummyBrands[keyLower]) {
+        setData(dummyBrands[keyLower]);
+        setStatus("hasil");
+      } else {
+        setStatus("error");
+      }
     }
   };
 

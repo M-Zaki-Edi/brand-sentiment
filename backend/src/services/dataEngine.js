@@ -1,30 +1,32 @@
 // backend/src/services/dataEngine.js
-const axios = require('axios');
+// Engine ini mengecek database lokal dulu, jika tidak ada baru men-generate simulasi.
 
-// Fungsi untuk mengambil data dari API eksternal (sementara pakai mock generator)
+const { brands } = require('../data/brands'); // Data Kopi Kita, Teh Sejuk, dll ada di sini
+
 async function fetchBrandData(brandName) {
   const normalizedName = brandName.trim().toLowerCase();
 
-  // Di produksi: Panggil API (Google Reviews/SerpApi)
-  // const response = await axios.get(`https://api.contoh.com/search?q=${normalizedName}`);
-  
-  // SIMULASI ENGINE: Menghasilkan data sentimen secara dinamis berdasarkan nama brand.
-  // Ini memastikan brand apapun (Dior, Speed, Aoka) MENDAPAT RESPONS, bukan error hardcoded.
+  // 1. Cek apakah brand ada di data lokal (Kopi Kita, Teh Sejuk, Roti Manis)
+  if (brands[normalizedName]) {
+    return brands[normalizedName]; 
+  }
+
+  // 2. Jika brand BARU (Dior, Speed, dll), gunakan simulasi dinamis
+  // Di produksi, bagian ini diganti dengan panggilan API pihak ketiga (Google Places/SerpApi)
   const hash = normalizedName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
   
-  const positive = 40 + (hash % 30); // Angka dinamis 40-70%
-  const negative = 10 + (hash % 15); // Angka dinamis 10-25%
+  const positive = 40 + (hash % 30);
+  const negative = 10 + (hash % 15);
   const neutral = 100 - positive - negative;
 
-  // Simulasi tren 7 hari
   const trend = Array.from({ length: 7 }, (_, i) => ({
     date: `${14 + i} Nov`,
     day: ["Sab", "Min", "Sen", "Sel", "Rab", "Kam", "Jum"][i],
-    score: 60 + (hash % 20) + (i % 3 === 0 ? -2 : 1) // Skor fluktuatif
+    score: 60 + (hash % 20) + (i % 3 === 0 ? -2 : 1)
   }));
 
   return {
-    brand: brandName,
+    brand: brandName, // Tampilkan nama sesuai input user
     positive,
     neutral,
     negative,
@@ -34,7 +36,6 @@ async function fetchBrandData(brandName) {
       { label: "Layanan pelanggan", percent: 15 + (hash % 10) },
       { label: "Harga", percent: 10 + (hash % 5) }
     ],
-    // AI Summary statis dulu (karena AI belum diprioritaskan)
     aiSummary: `Analisis untuk ${brandName} menunjukkan sentimen yang perlu diperhatikan.`,
     recommendations: [
       { priority: "TINGGI", action: "Tingkatkan kualitas", reason: "Berdasarkan keluhan pengguna" },
