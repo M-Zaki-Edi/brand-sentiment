@@ -4,9 +4,14 @@ const cors = require("cors");
 const { brands, publicTrends } = require("./data/brands");
 
 const app = express();
-app.use(cors()); // fungsinya: izinkan frontend (Vercel) memanggil API ini
 
-// GET /api/sentiment?brand={nama} — sesuai kontrak v2.0
+// Izinkan request dari domain frontend Vercel
+app.use(cors({
+  origin: "https://brand-sentiment-xi.vercel.app",
+  methods: ["GET"]
+}));
+
+// GET /api/sentiment
 app.get("/api/sentiment", (req, res) => {
   const key = (req.query.brand || "").trim().toLowerCase();
   const found = brands[key];
@@ -14,9 +19,14 @@ app.get("/api/sentiment", (req, res) => {
   res.json(found);
 });
 
-// GET /api/public/trends — sesuai kontrak v2.0
+// GET /api/public/trends
 app.get("/api/public/trends", (req, res) => {
   res.json(publicTrends);
+});
+
+// Tambahkan route dasar untuk health check
+app.get("/", (req, res) => {
+  res.send("API SentimenBrand Jalan!");
 });
 
 const PORT = process.env.PORT || 4000;

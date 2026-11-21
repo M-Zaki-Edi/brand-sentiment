@@ -1,15 +1,14 @@
+// frontend/app/page.tsx
 "use client";
 import { useState } from "react";
+import { dummyBrands, type Sentiment } from "@/data/dummy";
 import { hitungSkor } from "@/lib/score";
-import type { Sentiment } from "@/data/dummy";
 import BrandInput from "@/components/BrandInput";
 import SummaryCard from "@/components/SummaryCard";
 import AIRecommendation from "@/components/AIRecommendation";
 import SentimentChart from "@/components/SentimentChart";
 import TopicList from "@/components/TopicList";
 import { EmptyState, LoadingState, ErrorState } from "@/components/States";
-
-const API = process.env.NEXT_PUBLIC_API_URL;
 
 type Status = "kosong" | "loading" | "hasil" | "error";
 
@@ -18,23 +17,22 @@ export default function Dashboard() {
   const [brand, setBrand] = useState("");
   const [data, setData] = useState<Sentiment | null>(null);
 
-  const handlePantau = async (nama: string) => {
-    const key = nama.trim();
+  const handlePantau = (nama: string) => {
+    const key = nama.trim().toLowerCase();
     if (!key) return;
-    setBrand(key);
+    setBrand(nama.trim());
     setStatus("loading");
-    try {
-      const res = await fetch(`${API}/api/sentiment?brand=${encodeURIComponent(key)}`);
-      if (!res.ok) {
-        setStatus("error");
-        return;
+    
+    // REVERT: Pakai dummy dulu agar web hidup. Fetch API ditunda.
+    setTimeout(() => {
+      const found = dummyBrands[key];
+      if (found) { 
+        setData(found); 
+        setStatus("hasil"); 
+      } else { 
+        setStatus("error"); 
       }
-      const json = await res.json();
-      setData(json);
-      setStatus("hasil");
-    } catch {
-      setStatus("error");
-    }
+    }, 800); // Loading dipersingkat dikit biar responsif
   };
 
   const skor = data ? hitungSkor(data.positive, data.negative) : 0;
