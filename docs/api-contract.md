@@ -1,5 +1,5 @@
 # Kontrak API — SentimenBrand
-Versi: 2.0 (setelah F4) — ditambahkan `recommendations`, data per brand, tren bervariasi.
+Versi: 2.1 (F5) — ditambahkan endpoint publik `/api/public/trends`
 
 ## GET /api/sentiment?brand={nama}
 
@@ -47,13 +47,40 @@ Bentuk response **sama persis** dengan `dummyBrands` di `data/dummy.ts`.
 | trend | array | 7 titik: date, day, score (0–100) |
 | topics | array | label + percent (dari ulasan negatif) |
 | aiSummary | string | Ringkasan + saran singkat dari AI |
-| recommendations | array | **BARU**: priority (TINGGI/SEDANG/RENDAH), action, reason |
+| recommendations | array | priority (TINGGI/SEDANG/RENDAH), action, reason |
+
+---
+
+## GET /api/public/trends
+
+Endpoint untuk halaman publik (`/publik`).
+Mengembalikan daftar ringkas tren brand — bukan analisis lengkap.
+
+### Response 200 (application/json)
+[
+  { "brand": "Kopi Kita", "trend": "turun", "direction": "down" },
+  { "brand": "Teh Sejuk", "trend": "naik", "direction": "up" },
+  { "brand": "Roti Manis", "trend": "naik", "direction": "up" }
+]
+
+### Field
+| Field | Tipe | Keterangan |
+|-------|------|------------|
+| brand | string | Nama brand |
+| trend | "naik" \| "turun" | Arah tren (untuk teks) |
+| direction | "up" \| "down" | Arah tren (untuk ikon/warna) |
 
 ### Catatan
+- Bentuk response **sama persis** dengan `publicTrends` di `data/dummy.ts`.
+- Halaman publik saat ini memakai data dummy; endpoint ini adalah
+  jalur integrasi saat backend siap.
+- Endpoint ini dibangun paralel — tidak menunggu endpoint lain.
+
+---
+
+### Catatan Umum
 - Skor TIDAK dikirim backend — dihitung frontend via `lib/score.ts`
-  agar satu sumber kebenaran: (positive - negative + 100) / 2.
+  agar satu sumber kebenaran: `(positive - negative + 100) / 2`.
 - Persentase `topics.percent` dihitung **dari ulasan negatif**, bukan dari total.
 - Semua field wajib ada. Frontend boleh pakai data dummy selama
-  backend belum siap, dengan bentuk yang sama.
-- Untuk halaman publik, endpoint tambahan: `GET /api/public/trends`
-  → mengembalikan daftar `{ brand, trend: "naik" | "turun" }`.
+  backend belum siap, dengan bentuk yang sama persis.

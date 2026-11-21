@@ -1,8 +1,7 @@
-// app/page.tsx
 "use client";
 import { useState } from "react";
-import { dummyBrands, type Sentiment } from "@/data/dummy";
 import { hitungSkor } from "@/lib/score";
+import type { Sentiment } from "@/data/dummy";
 import BrandInput from "@/components/BrandInput";
 import SummaryCard from "@/components/SummaryCard";
 import AIRecommendation from "@/components/AIRecommendation";
@@ -10,24 +9,32 @@ import SentimentChart from "@/components/SentimentChart";
 import TopicList from "@/components/TopicList";
 import { EmptyState, LoadingState, ErrorState } from "@/components/States";
 
+const API = process.env.NEXT_PUBLIC_API_URL;
+
 type Status = "kosong" | "loading" | "hasil" | "error";
 
 export default function Dashboard() {
   const [status, setStatus] = useState<Status>("kosong");
   const [brand, setBrand] = useState("");
-  const [data, setData] = useState<Sentiment | null>(null); // BARU
+  const [data, setData] = useState<Sentiment | null>(null);
 
-  const handlePantau = (nama: string) => {
-    const key = nama.trim().toLowerCase();
-    if (!key) return; // input kosong tidak diproses
-    setBrand(nama.trim());
+  const handlePantau = async (nama: string) => {
+    const key = nama.trim();
+    if (!key) return;
+    setBrand(key);
     setStatus("loading");
-    // Nanti Kidi ganti isi setTimeout dengan fetch ke API
-    setTimeout(() => {
-      const found = dummyBrands[key];
-      if (found) { setData(found); setStatus("hasil"); }
-      else setStatus("error");
-    }, 1500);
+    try {
+      const res = await fetch(`${API}/api/sentiment?brand=${encodeURIComponent(key)}`);
+      if (!res.ok) {
+        setStatus("error");
+        return;
+      }
+      const json = await res.json();
+      setData(json);
+      setStatus("hasil");
+    } catch {
+      setStatus("error");
+    }
   };
 
   const skor = data ? hitungSkor(data.positive, data.negative) : 0;

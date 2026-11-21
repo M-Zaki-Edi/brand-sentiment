@@ -96,3 +96,20 @@ export const dummyBrands: Record<string, Sentiment> = {
     ],
   },
 };
+
+// data/dummy.ts — TAMBAHAN di bagian bawah file
+// publicTrends untuk halaman publik (F5).
+// Bentuk sesuai kebutuhan app/publik/page.tsx:
+// { brand, direction: "up" | "down", trend: "naik" | "turun" }
+
+export type PublicTrend = {
+  brand: string;
+  direction: "up" | "down";
+  trend: "naik" | "turun";
+};
+
+export const publicTrends: PublicTrend[] = [
+  { brand: "Kopi Kita", direction: "down", trend: "turun" },
+  { brand: "Teh Sejuk", direction: "up", trend: "naik" },
+  { brand: "Roti Manis", direction: "up", trend: "naik" },
+];
