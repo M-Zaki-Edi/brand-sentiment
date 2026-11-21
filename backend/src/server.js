@@ -1,32 +1,42 @@
 // backend/src/server.js
 const express = require("express");
 const cors = require("cors");
-const { brands, publicTrends } = require("./data/brands");
+const { fetchBrandData } = require("./services/dataEngine");
 
 const app = express();
 
-// Izinkan request dari domain frontend Vercel
+// CORS diizinkan untuk domain Vercel
 app.use(cors({
   origin: "https://brand-sentiment-xi.vercel.app",
   methods: ["GET"]
 }));
 
-// GET /api/sentiment
-app.get("/api/sentiment", (req, res) => {
-  const key = (req.query.brand || "").trim().toLowerCase();
-  const found = brands[key];
-  if (!found) return res.status(404).json({ error: "Brand tidak ditemukan" });
-  res.json(found);
+// Endpoint dinamis: Menerima brand apapun
+app.get("/api/sentiment", async (req, res) => {
+  const brandQuery = req.query.brand;
+  
+  if (!brandQuery) {
+    return res.status(400).json({ error: "Parameter brand wajib diisi" });
+  }
+
+  try {
+    // Panggil Engine data
+    const data = await fetchBrandData(brandQuery);
+    res.json(data);
+  } catch (error) {
+    console.error("Engine Error:", error);
+    res.status(500).json({ error: "Gagal menganalisis brand" });
+  }
 });
 
-// GET /api/public/trends
+// Endpoint publik
 app.get("/api/public/trends", (req, res) => {
-  res.json(publicTrends);
-});
-
-// Tambahkan route dasar untuk health check
-app.get("/", (req, res) => {
-  res.send("API SentimenBrand Jalan!");
+  // Tetap pakai data statis untuk halaman publik
+  res.json([
+    { brand: "Kopi Kita", trend: "turun", direction: "down" },
+    { brand: "Teh Sejuk", trend: "naik", direction: "up" },
+    { brand: "Roti Manis", trend: "naik", direction: "up" }
+  ]);
 });
 
 const PORT = process.env.PORT || 4000;
