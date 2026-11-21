@@ -1,26 +1,31 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
+/* 1. PAKSA LIGHT MODE — Cegah HP dark mode mengubah warna teks jadi putih */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: light !important;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* 2. SET WARNA DASAR — Pastikan latar selalu terang & teks selalu gelap */
+html,
+body {
+  background-color: #f8fafc !important; /* bg-slate-50 */
+  color: #1e293b !important; /* text-slate-800 */
+  margin: 0;
+  padding: 0;
 }
 
+/* 3. HAPUS PAKSAAN DARK MODE DARI TEMPLATE BAWAAN (jika ada) */
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  html,
+  body {
+    background-color: #f8fafc !important; /* Tetap terang! */
+    color: #1e293b !important;            /* Tetap gelap! */
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* 4. PASTIKAN SEMUA TEKS DI DALAM KARTU PUTIH TETAP GELAP */
+.bg-white {
+  color: #1e293b !important;
 }
