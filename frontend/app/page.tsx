@@ -12,12 +12,13 @@ import { EmptyState, LoadingState, ErrorState } from "@/components/States";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
-type Status = "kosong" | "loading" | "hasil" | "error";
+type Status = "kosong" | "loading" | "hasil" | "error" | "demo-info";
 
 export default function Dashboard() {
   const [status, setStatus] = useState<Status>("kosong");
   const [brand, setBrand] = useState("");
   const [data, setData] = useState<Sentiment | null>(null);
+  const [demoMessage, setDemoMessage] = useState("");
 
   const handlePantau = async (nama: string) => {
     const key = nama.trim();
@@ -26,47 +27,43 @@ export default function Dashboard() {
     setBrand(key);
     setStatus("loading");
 
-    const keyLower = key.toLowerCase();
-
-    // JIKA API_URL KOSONG (backend belum siap), LANGSUNG PAKAI DUMMY
+    // Fallback jika API belum live
     if (!API_URL) {
       setTimeout(() => {
-        if (dummyBrands[keyLower]) {
-          setData(dummyBrands[keyLower]);
+        if (dummyBrands[key.toLowerCase()]) {
+          setData(dummyBrands[key.toLowerCase()]);
           setStatus("hasil");
         } else {
-          setStatus("error"); // Brand asing belum didukung di mode dummy
+          setDemoMessage("Brand belum tersedia di demo. Di versi produksi, data akan diambil dari API Sosial Media (X, TikTok, Shopee).");
+          setStatus("demo-info");
         }
       }, 800);
       return;
     }
 
-    // JIKA API_URL ADA, COBA FETCH KE BACKEND
     try {
       const res = await fetch(`${API_URL}/api/sentiment?brand=${encodeURIComponent(key)}`);
       
-      // JIKA BACKEND ERROR / GAGAL, FALLBACK KE DUMMY (biar web gak kosong)
-      if (!res.ok) {
-        if (dummyBrands[keyLower]) {
-          setData(dummyBrands[keyLower]);
-          setStatus("hasil");
-        } else {
-          setStatus("error");
-        }
+      if (res.status === 404) {
+        const json = await res.json();
+        setDemoMessage(json.message);
+        setStatus("demo-info");
         return;
       }
+      
+      if (!res.ok) throw new Error("Server error");
 
       const json = await res.json();
       setData(json);
       setStatus("hasil");
     } catch (err) {
-      console.error("Fetch gagal, fallback ke dummy:", err);
-      // FALLBACK JIKA KONEKSI PUTUS
-      if (dummyBrands[keyLower]) {
-        setData(dummyBrands[keyLower]);
+      // Fallback ke data dummy jika backend mati
+      if (dummyBrands[key.toLowerCase()]) {
+        setData(dummyBrands[key.toLowerCase()]);
         setStatus("hasil");
       } else {
-        setStatus("error");
+        setDemoMessage("Gagal menghubungi server. Brand ini belum tersedia di data demo.");
+        setStatus("demo-info");
       }
     }
   };
@@ -79,8 +76,19 @@ export default function Dashboard() {
       
       {status === "kosong" && <EmptyState />}
       {status === "loading" && <LoadingState brand={brand} />}
-      {status === "error" && <ErrorState onRetry={() => setStatus("kosong")} />}
       
+      {/* STATE BARU: Pesan Jujur Demo */}
+      {status === "demo-info" && (
+        <div className="flex flex-col items-center justify-center h-64 text-slate-500 gap-3">
+          <p className="text-3xl">ℹ️</p>
+          <p className="font-medium text-lg">Simulasi Demo</p>
+          <p className="text-sm text-center max-w-md">{demoMessage}</p>
+          <button onClick={() => setStatus("kosong")} className="bg-slate-100 rounded-lg px-4 py-2 mt-2">
+            Coba lagi
+          </button>
+        </div>
+      )}
+
       {status === "hasil" && data && (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
